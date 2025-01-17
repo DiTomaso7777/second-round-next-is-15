@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { useShoppingCart } from '../context/ShoppingCartContext';
 import { createOrderPayload } from '../utils/orderService';
@@ -13,7 +12,7 @@ export default function CheckoutButton() {
     try {
       const orderXml = createOrderPayload(cart);
       
-      // Use local API route instead of direct external API call
+      // Send to our Next.js API route
       const response = await fetch('/api/order', {
         method: 'PUT',
         headers: {
@@ -23,8 +22,12 @@ export default function CheckoutButton() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to place order');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Failed to place order');
       }
+
+      const data = await response.text();
+      console.log('Order response:', data);
 
       clearCart();
       alert('Order placed successfully!');
@@ -38,10 +41,10 @@ export default function CheckoutButton() {
   };
 
   return (
-    <button 
+    <button
       onClick={handleCheckout}
       disabled={isLoading || cart.length === 0}
-      className={`w-full py-3 rounded-lg font-semibold transition-colors
+      className={`w-full py-3 rounded-lg font-semibold transition-colors 
         ${isLoading 
           ? 'bg-gray-400 cursor-not-allowed' 
           : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
